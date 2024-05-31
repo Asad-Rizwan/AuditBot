@@ -19,7 +19,6 @@ from langchain.retrievers.multi_query import MultiQueryRetriever
 import os
 import io
 import time
-from streamlit_mic_recorder import mic_recorder, speech_to_text
 import logging
 from logging.handlers import RotatingFileHandler
 
@@ -34,9 +33,6 @@ logger = logging.getLogger(__name__)
 API_KEY = st.secrets.get('OPENAI_API_KEY')
 conversation_placeholder = st.empty()
 
-global shush
-shush = 0
-
 
 class Document:
     def __init__(self, page_content, metadata):
@@ -47,10 +43,6 @@ class Document:
 
 
 def clear_chat():
-    # Remove the audio file used in the whisper_stt function
-    file_path = "./audio.mp3"
-    if os.path.exists(file_path):
-        os.remove(file_path)
     st.success("Chat history cleared. You can start a new conversation.")
     chat_history.clear()
     st.session_state.messages = []
