@@ -52,24 +52,6 @@ def clear_chat():
     st.rerun()
 
 
-def load_documents_from_directory(directory: str) -> List[Document]:
-    documents = []
-    for filename in os.listdir(data_directory):
-        file_path = os.path.join(data_directory, filename)
-        if filename.endswith(".txt"):
-            loader = TextLoader(file_path, encoding="utf-8")
-        elif filename.endswith(".pdf"):
-            loader = PyPDFLoader(file_path)
-        #         if filename.endswith(".json"):
-        #             loader = JSONLoader(file_path=file_path,jq_schema='.[]',text_content=False )
-        # #            documents.extend(load_json_documents(file_path))
-        # #            continue  # Skip processing the rest of the loop for JSON files
-        # #        else:
-        # #            continue  # Skip files that are not supported
-        documents.extend(loader.load())
-    return documents
-
-
 def format_docs(docs):
     return "\n\n".join(doc.page_content for doc in docs)
 
@@ -100,31 +82,21 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-data_directory = "./data/"
+persist_directory = 'chroma'
 
-if 'loaded_documents' not in st.session_state:
-    loaded_documents = load_documents_from_directory(data_directory)
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
-    texts = text_splitter.split_documents(loaded_documents)
+if 'chroma' not in st.session_state:
     embeddings = OpenAIEmbeddings(model='text-embedding-3-large')
-    persist_directory = 'chroma'
-    if not os.path.exists(persist_directory):
-        st.success("Database persisted!")
-        vectordb = Chroma.from_documents(documents=texts,
-                                         embedding=embeddings,
-                                         persist_directory=persist_directory)
-        vectordb.persist()
-    else:
+    if os.path.exists(persist_directory):
         st.success("Database loaded!")
         vectordb = Chroma(persist_directory=persist_directory,
                           embedding_function=embeddings)
+    else:
+        st.error("Chroma database not found. Please make sure to upload it.")
+        vectordb = None
 
-    st.session_state.loaded_documents = loaded_documents
-    st.session_state.vectordb = vectordb
-    st.session_state.context_history = []
-else:
-    loaded_documents = st.session_state.loaded_documents
-    vectordb = st.session_state.vectordb
+    st.session_state.chroma = vectordb
+
+vectordb = st.session_state.chroma
 
 qa_system_prompt = """
 Welcome! You are interacting with an audit assistant bot specializing in providing helpful responses related to audit reports, observations, implications, recommendations, and management responses. Your role is to offer accurate and informative guidance based on the provided context.
