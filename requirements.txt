@@ -1,0 +1,11 @@
+langchain==0.1.16
+langchain_community==0.0.32
+python-dotenv==1.0.1
+streamlit==1.33.0
+pypdf
+chromadb
+pysqlite3-binary
+tiktoken
+langchain_openai
+jq
+openai
